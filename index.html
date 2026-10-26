@@ -162,8 +162,8 @@
         <div class="sets">
           <button type="button" class="set" data-q="1"><span class="n">1 <span>шт</span></span><span class="lbl">Попробовать</span><span class="sum">250 ₽</span></button>
           <button type="button" class="set" data-q="3"><span class="badge hit">Хит</span><span class="n">3 <span>шт</span></span><span class="lbl">Для поделок</span><span class="sum">750 ₽</span></button>
-          <button type="button" class="set" data-q="5"><span class="n">5 <span>шт</span></span><span class="lbl">Знатный мастер</span><span class="sum">1 250 ₽</span></button>
-          <button type="button" class="set" data-q="10"><span class="badge free">Доставка 0 ₽</span><span class="n">10 <span>шт</span></span><span class="lbl">Целая артель</span><span class="sum">2 500 ₽</span></button>
+          <button type="button" class="set" data-q="5"><span class="badge free">Доставка 0 ₽</span><span class="n">5 <span>шт</span></span><span class="lbl">Знатный мастер</span><span class="sum">1 250 ₽</span></button>
+          <button type="button" class="set" data-q="10"><span class="n">10 <span>шт</span></span><span class="lbl">Целая артель</span><span class="sum">2 500 ₽</span></button>
         </div>
 
         <div class="ship" id="ship">
@@ -197,7 +197,7 @@
             <div class="radio"></div>
             <div>
               <div class="ot">Пункт выдачи Ozon</div>
-              <div class="od">По всей России. <b>Бесплатно от 10 пачек</b></div>
+              <div class="od">По всей России. <b>Бесплатно от 5 пачек</b></div>
               <div class="addr" id="addrBox"><input id="addr" type="text" placeholder="Город и адрес пункта выдачи Ozon" aria-label="Адрес пункта выдачи Ozon"></div>
             </div>
             <div class="op" id="ozonPrice"></div>
@@ -216,11 +216,11 @@
       <section class="card sum-card">
         <h2>Итого</h2>
         <div class="line"><span id="lItems">Палочки, 1 шт</span><span id="vItems">250 ₽</span></div>
-        <div class="line"><span>Доставка</span><span id="vShip">300 ₽</span></div>
-        <div class="line total"><span>К оплате</span><span id="vTotal">550 ₽</span></div>
+        <div class="line"><span>Доставка</span><span id="vShip">250 ₽</span></div>
+        <div class="line total"><span>К оплате</span><span id="vTotal">500 ₽</span></div>
         <div class="saved" id="saved"></div>
         <div class="pay"><b>Онлайн-оплата</b>СБП или карта любого банка через ЮKassa. Доставка оплачивается сразу вместе с заказом.</div>
-        <button class="btn" id="btn" type="button">Оплатить 550 ₽</button>
+        <button class="btn" id="btn" type="button">Оплатить 500 ₽</button>
         <div class="note" id="note"></div>
         <label class="agree"><input id="agree" type="checkbox" checked> Согласен с политикой обработки персональных данных</label>
         <div class="perks">
@@ -233,7 +233,7 @@
 </div>
 
 <script>
-  const PRICE = 250, SHIP = 300, FREE_FROM = 2500;
+  const PRICE = 250, SHIP = 250, FREE_FROM = 1250;
   let q = 1, d = 'ozon';
   const $ = id => document.getElementById(id);
   const rub = n => n.toLocaleString('ru-RU') + ' ₽';
