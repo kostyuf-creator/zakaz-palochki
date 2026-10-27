@@ -91,12 +91,6 @@
   .chip.on { background: var(--sum-bg); color: var(--sum-fg); border-color: var(--sum-bg); }
 
   .opts { display: grid; gap: 10px; }
-  .zones { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 12px; }
-  .zone { border: 1px solid var(--line); background: var(--field); color: var(--ink); border-radius: 10px; padding: 8px 10px;
-          font: 600 13px var(--sans); text-align: left; cursor: pointer; line-height: 1.25; }
-  .zone small { display: block; font-weight: 500; font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .zone.on { background: var(--sum-bg); color: var(--sum-fg); border-color: var(--sum-bg); }
-  .zone.on small { color: color-mix(in srgb, var(--sum-fg) 75%, transparent); }
   .opt { display: grid; grid-template-columns: 22px 1fr auto; gap: 12px; align-items: start; border: 1.5px solid var(--line); background: var(--field);
          border-radius: 14px; padding: 14px 16px; cursor: pointer; }
   .opt.on { border-color: var(--green); background: var(--soft); }
@@ -109,6 +103,7 @@
   .op s { color: var(--muted); font-weight: 600; margin-right: 6px; }
   .op .free { color: var(--green-2); }
   .addr { margin-top: 12px; }
+  #shipHint { margin-top: 8px; }
 
   .sum-card { background: var(--sum-bg); color: var(--sum-fg); border: 0; position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); }
   .sum-card h2 { color: var(--sum-fg); margin-bottom: 10px; }
@@ -203,12 +198,9 @@
             <div class="radio"></div>
             <div>
               <div class="ot">Пункт выдачи Ozon</div>
-              <div class="od" id="zoneNote">По всей России. <b>Бесплатно от 10 пачек</b></div>
-              <div class="zones" id="zones" role="radiogroup" aria-label="Регион доставки">
-                <button type="button" class="zone on" data-z="ru" role="radio" aria-checked="true">Вся Россия<small>250 ₽ · бесплатно от 10 пачек</small></button>
-                <button type="button" class="zone" data-z="far" role="radio" aria-checked="false">Сибирь и Дальний Восток<small>350 ₽ · бесплатно от 15 пачек</small></button>
-              </div>
+              <div class="od">По всей России. <b>Бесплатно от 10 пачек</b></div>
               <div class="addr" id="addrBox"><input id="addr" type="text" placeholder="Город и адрес пункта выдачи Ozon" aria-label="Адрес пункта выдачи Ozon"></div>
+              <div class="od" id="shipHint">Стоимость доставки посчитаем, когда укажете пункт выдачи</div>
             </div>
             <div class="op" id="ozonPrice"></div>
           </div>
@@ -226,11 +218,11 @@
       <section class="card sum-card">
         <h2>Итого</h2>
         <div class="line"><span id="lItems">Палочки, 1 шт</span><span id="vItems">250 ₽</span></div>
-        <div class="line"><span>Доставка</span><span id="vShip">250 ₽</span></div>
-        <div class="line total"><span>К оплате</span><span id="vTotal">500 ₽</span></div>
+        <div class="line"><span>Доставка</span><span id="vShip">после выбора пункта</span></div>
+        <div class="line total"><span>К оплате</span><span id="vTotal">250 ₽</span></div>
         <div class="saved" id="saved"></div>
         <div class="pay"><b>Онлайн-оплата</b>СБП или карта любого банка через ЮKassa. Доставка оплачивается сразу вместе с заказом.</div>
-        <button class="btn" id="btn" type="button">Оплатить 500 ₽</button>
+        <button class="btn" id="btn" type="button">Укажите пункт выдачи</button>
         <div class="note" id="note"></div>
         <label class="agree"><input id="agree" type="checkbox" checked> Согласен с политикой обработки персональных данных</label>
         <div class="perks">
@@ -243,33 +235,32 @@
 </div>
 
 <script>
-  const PRICE = 250;
-  // delivery zones: Siberia and the Far East cost Ozon Delivery noticeably more from the Kazan cluster
-  const ZONES = {
-    ru:  { ship: 250, freeFrom: 2500, note: 'По всей России. <b>Бесплатно от 10 пачек</b>' },
-    far: { ship: 350, freeFrom: 3750, note: 'Тюмень, Омск, Новосибирск, Красноярск, Иркутск, Хабаровск, Владивосток и дальше. <b>Бесплатно от 15 пачек</b>' },
-  };
-  let q = 1, d = 'ozon', z = 'ru';
+  const PRICE = 250, FREE_FROM = 2500;
+  // The delivery price appears only after the pickup point is entered. Siberia and the Far East cost
+  // Ozon Delivery more from the Kazan cluster. On the live site the price comes from the Ozon Delivery
+  // calculator; in this mockup it is guessed from the city name.
+  const FAR = /тюмен|сургут|нижневартов|ханты|салехард|уренго|ноябрьск|тобольск|омск|новосиб|томск|кемеров|новокузн|барнаул|бийск|горно-алт|абакан|кызыл|красноярск|норильск|иркутск|ангарск|братск|улан-уд|чита|якутск|хабаровск|комсомольск|владивосток|уссурийск|находк|благовещ|биробидж|южно-сах|сахалин|магадан|петропавловск|камчат|анадыр|ямал|хмао/i;
+  const shipFor = city => FAR.test(city) ? 350 : 250;
+  let q = 1, d = 'ozon';
   const $ = id => document.getElementById(id);
   const rub = n => n.toLocaleString('ru-RU') + ' ₽';
   const plural = n => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? 'пачку' : (a >= 2 && a <= 4 && (b < 12 || b > 14)) ? 'пачки' : 'пачек'; };
 
   function render() {
-    const { ship: SHIP, freeFrom: FREE_FROM, note } = ZONES[z];
+    const city = $('addr').value.trim();
+    const known = city.length >= 3, SHIP = shipFor(city);
     const items = q * PRICE, free = items >= FREE_FROM;
-    const ship = d === 'pickup' ? 0 : (free ? 0 : SHIP);
-    $('zoneNote').innerHTML = note;
-    document.querySelectorAll('.zone').forEach(b => { b.classList.toggle('on', b.dataset.z === z); b.setAttribute('aria-checked', b.dataset.z === z); });
-    $('zones').hidden = d !== 'ozon';
-    document.querySelector('.badge.free').hidden = z !== 'ru';
+    const pending = d === 'ozon' && !free && !known;
+    const ship = d === 'pickup' || free ? 0 : (known ? SHIP : 0);
     $('q').textContent = q;
     $('lItems').textContent = `Палочки, ${q} шт`;
     $('vItems').textContent = rub(items);
-    $('vShip').textContent = d === 'pickup' ? 'Самовывоз' : (ship ? rub(ship) : 'Бесплатно');
+    $('vShip').textContent = d === 'pickup' ? 'Самовывоз' : free ? 'Бесплатно' : pending ? 'после выбора пункта' : rub(ship);
     $('vTotal').textContent = rub(items + ship);
-    $('btn').textContent = `Оплатить ${rub(items + ship)}`;
-    $('saved').textContent = d === 'ozon' && free ? `Вы экономите ${rub(SHIP)} на доставке` : '';
-    $('ozonPrice').innerHTML = free ? `<s>${rub(SHIP)}</s><span class="free">0 ₽</span>` : rub(SHIP);
+    $('btn').textContent = pending ? 'Укажите пункт выдачи' : `Оплатить ${rub(items + ship)}`;
+    $('saved').textContent = d === 'ozon' && free && known ? `Вы экономите ${rub(SHIP)} на доставке` : '';
+    $('ozonPrice').innerHTML = free ? `<span class="free">0 ₽</span>` : known ? rub(SHIP) : '';
+    $('shipHint').hidden = d !== 'ozon' || free || known;
     $('addrBox').hidden = d !== 'ozon';
     const packs = Math.ceil((FREE_FROM - items) / PRICE);
     $('ship').classList.toggle('done', free);
@@ -288,12 +279,15 @@
     render();
   };
   document.querySelectorAll('.opt').forEach(o => {
-    o.onclick = e => { if (!e.target.closest('input, .zone')) pick(o); };
+    o.onclick = e => { if (!e.target.closest('input')) pick(o); };
     o.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(o); } };
   });
-  document.querySelectorAll('.zone').forEach(b => b.onclick = () => { z = b.dataset.z; render(); });
+  $('addr').addEventListener('input', render);
   document.querySelectorAll('.chip').forEach(c => c.onclick = () => c.classList.toggle('on'));
   $('form').addEventListener('submit', e => e.preventDefault());
-  $('btn').onclick = () => { $('note').textContent = 'Это макет: на сайте здесь откроется оплата ЮKassa'; };
+  $('btn').onclick = () => {
+    if ($('btn').textContent === 'Укажите пункт выдачи') { $('addr').focus(); return; }
+    $('note').textContent = 'Это макет: на сайте здесь откроется оплата ЮKassa';
+  };
   render();
 </script>
